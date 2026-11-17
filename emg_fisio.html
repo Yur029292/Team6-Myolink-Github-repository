@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMG Cuádriceps</title>
+<style>
+:root {
+  --page: #f9f9f7; --surface: #fcfcfb; --card: #ffffff; --border: #e1e0d9;
+  --ink: #0b0b0b; --ink2: #52514e; --muted: #898781; --grid: #e1e0d9;
+  --series: #2a78d6; --accent: #2a78d6; --accent-ink: #ffffff;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b; --info: #6250d6;
+  --danger-bg: #fdecec; --ok-bg: #e8f6e8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d0d0d; --surface: #1a1a19; --card: #1a1a19; --border: #2c2c2a;
+    --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781; --grid: #2c2c2a;
+    --series: #3987e5; --accent: #3987e5; --accent-ink: #ffffff;
+    --info: #9085e9; --danger-bg: #3a1d1d; --ok-bg: #1a301a;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--border); background: var(--card);
+  border-radius: 8px; padding: 7px 12px; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.danger { color: var(--crit); }
+button.small { padding: 3px 8px; font-size: 12px; }
+input, select, textarea { width: 100%; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; padding: 7px 9px; }
+textarea { resize: vertical; min-height: 54px; }
+label { display: block; font-size: 12px; color: var(--ink2); margin: 8px 0 3px; }
+
+header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--card); }
+header h1 { font-size: 17px; margin: 0; }
+.conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+.conn-meta { font-size: 12px; color: var(--ink2); }
+
+.layout { display: grid; grid-template-columns: 290px 1fr; gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.card h2 { font-size: 14px; margin: 0 0 10px; }
+.stack > * + * { margin-top: 16px; }
+
+.patients { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; }
+.patients li { padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+.patients li:hover { border-color: var(--border); }
+.patients li.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.patients small { color: var(--ink2); display: block; }
+.empty { color: var(--muted); font-size: 13px; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tabs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.live-top { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+@media (max-width: 640px) { .live-top { grid-template-columns: 1fr; } }
+.hero-num { font-size: 52px; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+.hero-label { font-size: 12px; color: var(--ink2); }
+.state { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600;
+  padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); }
+.state .dot { width: 14px; height: 14px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.kv div { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+.kv b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.kv span { font-size: 12px; color: var(--ink2); }
+
+.chart-wrap { position: relative; }
+canvas { width: 100%; display: block; }
+.tip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  display: none; white-space: nowrap; z-index: 2; }
+.chart-title { font-size: 13px; color: var(--ink2); margin: 0 0 6px; }
+
+.rec-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rec-on { color: var(--crit); font-weight: 600; }
+.timer { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600; }
+.statebar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--surface); }
+.statebar div { height: 100%; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--ink2); font-weight: 500; }
+td.num { font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.banner { padding: 10px 12px; border-radius: 10px; background: var(--danger-bg); color: var(--ink); font-size: 13px; }
+.banner.ok { background: var(--ok-bg); }
+.hidden { display: none !important; }
+.note { font-size: 12px; color: var(--ink2); }
+.err { color: var(--crit); font-size: 12px; min-height: 1em; margin-top: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px;
+  padding: 4px 10px; font-size: 13px; cursor: pointer; user-select: none; }
+.chip input { width: auto; margin: 0; }
+.chip.on { border-color: var(--ink2); }
+.chip.dis { opacity: .45; cursor: not-allowed; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.cmp-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .cmp-grid { grid-template-columns: 1fr; } }
+.delta-up { color: var(--good); font-weight: 600; } .delta-down { color: var(--crit); font-weight: 600; }
+.vault-status { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.lock-icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>EMG Cuádriceps · Panel del fisioterapeuta</h1>
+  <div class="conn">
+    <span class="pill" id="connPill"><span class="dot" id="connDot"></span><span id="connText">Desconectado</span></span>
+    <span class="conn-meta" id="connMeta"></span>
+    <button class="primary" id="btnConnect">Conectar Bluetooth</button>
+    <button id="btnDisconnect" disabled>Desconectar</button>
+    <button id="btnDemo" title="Datos simulados para probar sin el Arduino">Modo demo</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="stack">
+
+    <!-- ENCRYPTED DATA -->
+    <div class="card" id="vaultCard">
+      <h2>Datos cifrados</h2>
+      <div class="vault-status"><span class="lock-icon" id="vaultIcon">🔒</span><span id="vaultStatus">Bloqueado</span></div>
+      <div class="note" id="vaultFolder" style="margin-top:4px"></div>
+
+      <div id="vaultNoFolder" class="hidden" style="margin-top:10px">
+        <p class="note">Elige la carpeta sincronizada (Google Drive, OneDrive o iCloud) donde se guardarán los datos. En todas las computadoras elige la <b>misma</b> carpeta.</p>
+        <button class="primary" id="btnPickFolder" style="width:100%">Elegir carpeta</button>
+      </div>
+
+      <form id="vaultUnlock" class="hidden" style="margin-top:10px" autocomplete="off">
+        <label for="vPass" id="vPassLabel">Contraseña</label>
+        <input type="password" id="vPass" autocomplete="current-password">
+        <div id="vConfirmWrap" class="hidden">
+          <label for="vPass2">Repite la contraseña</label>
+          <input type="password" id="vPass2" autocomplete="new-password">
+          <p class="note">Mínimo 10 caracteres. <b>Si se olvida, los datos no se pueden recuperar.</b> Guárdala en un lugar seguro.</p>
+        </div>
+        <button class="primary" type="submit" id="btnUnlock" style="width:100%;margin-top:8px">Desbloquear</button>
+        <div class="err" id="vErr"></div>
+      </form>
+
+      <div id="vaultOpen" class="hidden" style="margin-top:10px">
+        <div class="note" id="saveStatus"></div>
+        <div class="rec-row" style="margin-top:8px">
+          <button id="btnLock">Bloquear</button>
+          <button id="btnChangeFolder" class="small">Cambiar carpeta</button>
+        </div>
+        <p class="note" style="margin-top:8px">Se bloquea solo tras 15 min sin uso.</p>
+      </div>
+      <div id="vaultUnsupported" class="banner hidden" style="margin-top:10px">Este navegador no permite guardar en carpetas. Usa <b>Google Chrome</b> o <b>Microsoft Edge</b> en computadora.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pacientes</h2>
+      <div id="patientsLocked" class="empty">Desbloquea los datos para ver los pacientes.</div>
+      <div id="patientsWrap" class="hidden">
+        <ul class="patients" id="patientList"></ul>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer">+ Nuevo paciente</summary>
+          <label for="pCode">Código del paciente</label>
+          <input id="pCode" placeholder="Ej. P-014" maxlength="20" autocomplete="off">
+          <p class="note">Usa solo un código. <b>No escribas nombres</b>: la lista código ↔ nombre la guarda el fisioterapeuta por separado.</p>
+          <label for="pLeg">Pierna</label>
+          <select id="pLeg"><option>Derecha</option><option>Izquierda</option></select>
+          <label for="pNotes">Notas clínicas (sin nombres ni datos de contacto)</label>
+          <textarea id="pNotes"></textarea>
+          <button class="primary" id="btnAddPatient" style="margin-top:8px;width:100%">Guardar paciente</button>
+          <div class="err" id="pErr"></div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" id="patientCard">
+      <h2>Paciente seleccionado</h2>
+      <div id="patientInfo" class="empty">Ninguno.</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div id="noBt" class="banner hidden" style="margin-bottom:12px">
+      Este navegador no permite Bluetooth. Abre la página en <b>Google Chrome</b> o <b>Microsoft Edge</b> (computadora o Android). Puedes probar la página con el <b>Modo demo</b>.
+    </div>
+
+    <div class="tabs">
+      <button class="on" data-tab="live">En vivo</button>
+      <button data-tab="history">Historial y progreso</button>
+    </div>
+
+    <!-- LIVE TAB -->
+    <section id="tab-live" class="stack">
+      <div class="card">
+        <div class="live-top">
+          <div>
+            <div class="hero-label">RMS actual (unidades ADC)</div>
+            <div class="hero-num" id="rmsNow">–</div>
+            <div class="hero-label" id="rmsPct">&nbsp;</div>
+          </div>
+          <div>
+            <div class="state" id="stateBox"><span class="dot" id="stateDot"></span><span id="stateText">Sin datos</span></div>
+          </div>
+          <div style="text-align:right">
+            <button id="btnRecal" disabled title="El Arduino repite la calibración y la LCD muestra las instrucciones">Recalibrar</button>
+          </div>
+        </div>
+        <div class="kv" style="margin-top:14px">
+          <div><span>Límite de reposo</span><b id="restNow">–</b></div>
+          <div><span>Umbral contracción válida</span><b id="thrNow">–</b></div>
+          <div><span>Datos por segundo</span><b id="rateNow">–</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="chart-title">RMS en los últimos 15 segundos, con límite de reposo y umbral</p>
+        <div class="chart-wrap"><canvas id="liveChart" height="260"></canvas><div class="tip" id="liveTip"></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Sesión</h2>
+        <div class="rec-row">
+          <button class="primary" id="btnRec" disabled>Iniciar grabación</button>
+          <span class="timer" id="recTimer">00:00</span>
+          <span id="recStatus" class="note"></span>
+        </div>
+        <label for="sessNotes">Notas de la sesión (sin nombres)</label>
+        <textarea id="sessNotes" placeholder="Ej. Semana 3 postoperatorio, extensión de rodilla sentado"></textarea>
+        <div class="kv" style="margin-top:12px">
+          <div><span>Contracciones válidas</span><b id="stCount">0</b></div>
+          <div><span>RMS máximo</span><b id="stMax">–</b></div>
+          <div><span>RMS promedio</span><b id="stAvg">–</b></div>
+          <div><span>Duración prom. contracción</span><b id="stDur">–</b></div>
+        </div>
+        <p class="chart-title" style="margin-top:12px">Tiempo en cada estado</p>
+        <div class="statebar" id="stBar"></div>
+        <div class="note" id="stBarLegend" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <!-- HISTORY TAB -->
+    <section id="tab-history" class="stack hidden">
+      <div class="card">
+        <div class="rec-row" style="justify-content:space-between">
+          <h2 style="margin:0">Sesiones del paciente</h2>
+          <button id="btnCsvAll" disabled>Exportar resumen (CSV)</button>
+        </div>
+        <div class="tbl-wrap" style="margin-top:10px">
+          <table>
+            <thead><tr><th>Fecha</th><th>Duración</th><th>Contracciones</th><th>RMS máx</th><th>RMS prom</th><th>Notas</th><th></th></tr></thead>
+            <tbody id="sessTable"></tbody>
+          </table>
+        </div>
+        <div id="sessEmpty" class="empty" style="margin-top:8px"></div>
+        <p class="note" style="margin-top:8px">Los archivos CSV exportados <b>no</b> están cifrados. Guárdalos en un lugar seguro y bórralos cuando ya no los necesites.</p>
+      </div>
+
+      <div class="card hidden" id="sessViewCard">
+        <p class="chart-title" id="sessViewTitle"></p>
+        <div class="chart-wrap"><canvas id="sessChart" height="240"></canvas><div class="tip" id="sessTip"></div></div>
+      </div>
+
+      <div class="card" id="cmpCard">
+        <div class="rec-row" style="justify-content:space-between">
+          <h2 style="margin:0">Comparar sesiones</h2>
+          <div class="rec-row">
+            <label for="cmpMode" style="margin:0">Escala</label>
+            <select id="cmpMode" style="width:auto">
+              <option value="pct">% del umbral de cada sesión</option>
+              <option value="adc">RMS (unidades ADC)</option>
+            </select>
+            <button class="small" id="btnCmpLast">Últimas 3</button>
+            <button class="small" id="btnCmpClear">Quitar todas</button>
+          </div>
+        </div>
+        <p class="note" style="margin:6px 0 10px">Elige hasta 6 sesiones para superponerlas. <b>"% del umbral"</b> es mejor para comparar fechas distintas, porque cada calibración cambia la escala del RMS.</p>
+        <div class="chips" id="cmpChips"></div>
+        <div id="cmpEmpty" class="empty" style="margin-top:10px">Selecciona sesiones arriba para compararlas.</div>
+        <div class="cmp-grid hidden" id="cmpBody" style="margin-top:12px">
+          <div>
+            <p class="chart-title" id="cmpChartTitle"></p>
+            <div class="chart-wrap"><canvas id="cmpChart" height="300"></canvas><div class="tip" id="cmpTip"></div></div>
+            <div class="note" id="cmpLegend" style="margin-top:6px"></div>
+          </div>
+          <div class="tbl-wrap">
+            <p class="chart-title">Valores clave</p>
+            <table id="cmpTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <p class="chart-title">Progreso: RMS máximo por sesión</p>
+          <div class="chart-wrap"><canvas id="progMax" height="200"></canvas><div class="tip" id="progMaxTip"></div></div>
+        </div>
+        <div class="card">
+          <p class="chart-title">Progreso: contracciones válidas por sesión</p>
+          <div class="chart-wrap"><canvas id="progCount" height="200"></canvas><div class="tip" id="progCountTip"></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ================= CONFIG (Bluetooth UUIDs must match the Arduino sketch) ================= */
+const SVC_UUID  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const DATA_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const CMD_UUID  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const LIVE_WINDOW_S = 15;
+const DATA_DIR = 'EMG_datos';          // folder created inside the synced folder
+const PBKDF2_ITER = 310000;            // password -> key strength
+const AUTOLOCK_MS = 15 * 60 * 1000;    // lock after 15 min without use
+const CODE_RE = /^[A-Za-z0-9_-]{2,20}$/;
+
+const STATES = {
+  0: { name: 'Reposo', color: 'var(--crit)' },
+  1: { name: 'Actividad', color: 'var(--warn)' },
+  2: { name: 'Contracción válida', color: 'var(--good)' },
+  3: { name: 'Calibrando…', color: 'var(--info)' },
+};
+
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmt = (v, d = 1) => (v == null || isNaN(v)) ? '–' : Number(v).toFixed(d);
+const mmss = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+/* ================= ENCRYPTION (AES-256-GCM, key from password with PBKDF2) ================= */
+const te = new TextEncoder(), td = new TextDecoder();
+function toB64(buf) {
+  const b = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function fromB64(str) { const s = atob(str); const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+async function deriveKey(password, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', te.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encryptJSON(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(JSON.stringify(obj)));
+  return { v: 1, iv: toB64(iv), ct: toB64(ct) };
+}
+async function decryptJSON(key, box) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(box.iv) }, key, fromB64(box.ct));
+  return JSON.parse(td.decode(pt));
+}
+
+/* ================= FILES (File System Access API) ================= */
+async function readFileJSON(dir, name) {
+  try { const fh = await dir.getFileHandle(name); return JSON.parse(await (await fh.getFile()).text()); }
+  catch (e) { if (e.name === 'NotFoundError') return null; throw e; }
+}
+async function writeFileJSON(dir, name, obj) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(JSON.stringify(obj));
+  await w.close();
+}
+async function removeFile(dir, name) { try { await dir.removeEntry(name); } catch (e) { /* already gone */ } }
+
+/* Remembers which folder was chosen (only the folder handle, never patient data) */
+function cfgDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('emg_fisio_cfg', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function cfgGet(k) { const d = await cfgDB(); return new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); }
+async function cfgSet(k, v) { const d = await cfgDB(); return new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; }); }
+
+/* ================= VAULT ================= */
+const vault = {
+  root: null,      // folder the user picked
+  dir: null,       // root/EMG_datos
+  sessDir: null,   // root/EMG_datos/sesiones
+  key: null,       // AES key (only in memory while unlocked)
+  isNew: false,
+  index: { patients: {}, sessions: {} },  // decrypted index (only in memory)
+};
+const fsSupported = 'showDirectoryPicker' in window;
+let saveChain = Promise.resolve();
+let lastActivity = Date.now();
+
+const unlocked = () => !!vault.key;
+const livePatients = () => Object.values(vault.index.patients).filter(p => !p.deleted).sort((a, b) => a.code.localeCompare(b.code));
+const liveSessions = pid => Object.values(vault.index.sessions).filter(s => !s.deleted && s.patientId === pid).sort((a, b) => a.date - b.date);
+
+async function openDataDirs() {
+  vault.dir = await vault.root.getDirectoryHandle(DATA_DIR, { create: true });
+  vault.sessDir = await vault.dir.getDirectoryHandle('sesiones', { create: true });
+  vault.isNew = !(await readFileJSON(vault.dir, 'clave.json'));
+}
+async function ensurePermission() {
+  if (!vault.root.queryPermission) return true;
+  const opts = { mode: 'readwrite' };
+  if (await vault.root.queryPermission(opts) === 'granted') return true;
+  return (await vault.root.requestPermission(opts)) === 'granted';
+}
+
+$('btnPickFolder').onclick = pickFolder;
+$('btnChangeFolder').onclick = async () => {
+  if (rec) { alert('Detén la grabación primero.'); return; }
+  lockVault(); await pickFolder();
+};
+async function pickFolder() {
+  try {
+    vault.root = await window.showDirectoryPicker({ id: 'emg-datos', mode: 'readwrite' });
+  } catch (e) { return; } // user cancelled
+  if (vault.root.name === DATA_DIR) {   // user picked EMG_datos itself: use its parent? we can't, so just warn
+    alert(`Elegiste la carpeta "${DATA_DIR}". Elige la carpeta que la CONTIENE (la carpeta sincronizada).`);
+    vault.root = null; return;
+  }
+  await cfgSet('root', vault.root);
+  await openDataDirs();
+  renderVault();
+}
+
+$('vaultUnlock').onsubmit = async e => {
+  e.preventDefault();
+  $('vErr').textContent = '';
+  const pass = $('vPass').value;
+  try {
+    if (!(await ensurePermission())) { $('vErr').textContent = 'Se necesita permiso para usar la carpeta.'; return; }
+    if (!vault.dir) await openDataDirs();
+    if (vault.isNew && $('vConfirmWrap').classList.contains('hidden')) {
+      renderVault();
+      $('vErr').textContent = 'Esta carpeta aún no tiene datos: crea una contraseña nueva.';
+      return;
+    }
+    $('btnUnlock').disabled = true; $('btnUnlock').textContent = 'Abriendo…';
+    if (vault.isNew) {
+      if (pass.length < 10) throw new Error('La contraseña debe tener al menos 10 caracteres.');
+      if (pass !== $('vPass2').value) throw new Error('Las contraseñas no coinciden.');
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(pass, salt, PBKDF2_ITER);
+      await writeFileJSON(vault.dir, 'clave.json', {
+        app: 'emg_fisio', v: 1, kdf: 'PBKDF2-SHA256', iter: PBKDF2_ITER, salt: toB64(salt),
+        check: await encryptJSON(key, 'emg-ok'),
+      });
+      vault.key = key;
+      vault.index = { patients: {}, sessions: {} };
+      await writeFileJSON(vault.dir, 'indice.emg', await encryptJSON(key, vault.index));
+      vault.isNew = false;
+    } else {
+      const meta = await readFileJSON(vault.dir, 'clave.json');
+      const key = await deriveKey(pass, fromB64(meta.salt), meta.iter);
+      try { if (await decryptJSON(key, meta.check) !== 'emg-ok') throw 0; }
+      catch { throw new Error('Contraseña incorrecta.'); }
+      vault.key = key;
+      await reloadIndex();
+    }
+    $('vPass').value = ''; $('vPass2').value = '';
+    lastActivity = Date.now();
+    renderVault(); renderPatients(); await renderHistory();
+    setSaveStatus('Datos abiertos ✓');
+    await offerMigration();
+  } catch (err) {
+    console.warn(err);
+    $('vErr').textContent = err.message || 'No se pudo abrir.';
+  } finally {
+    $('btnUnlock').disabled = false; renderVault();
+  }
+};
+
+$('btnLock').onclick = () => {
+  if (rec) { alert('Detén y guarda la grabación antes de bloquear.'); return; }
+  lockVault();
+};
+function lockVault() {
+  vault.key = null;
+  vault.index = { patients: {}, sessions: {} };
+  selectedId = null;
+  sampleCache.clear(); cmpSel = new Map();
+  renderVault(); renderPatients(); renderHistory();
+}
+
+/* Merge two indexes record by record, keeping the newest version (so two computers don't overwrite each other) */
+function mergeIndex(a, b) {
+  const out = { patients: {}, sessions: {} };
+  for (const kind of ['patients', 'sessions']) {
+    const A = (a && a[kind]) || {}, B = (b && b[kind]) || {};
+    for (const id of new Set([...Object.keys(A), ...Object.keys(B)])) {
+      const x = A[id], y = B[id];
+      out[kind][id] = !x ? y : !y ? x : ((y.updated || 0) >= (x.updated || 0) ? y : x);
+    }
+  }
+  return out;
+}
+async function readDiskIndex() {
+  const box = await readFileJSON(vault.dir, 'indice.emg');
+  return box ? await decryptJSON(vault.key, box) : { patients: {}, sessions: {} };
+}
+async function reloadIndex() {
+  vault.index = mergeIndex(await readDiskIndex(), vault.index);
+}
+function saveIndex() {
+  const key = vault.key;
+  saveChain = saveChain.then(async () => {
+    if (!key || key !== vault.key) return;
+    setSaveStatus('Guardando…');
+    try {
+      vault.index = mergeIndex(await readDiskIndex(), vault.index);
+      await writeFileJSON(vault.dir, 'indice.emg', await encryptJSON(key, vault.index));
+      setSaveStatus('Guardado ✓ ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }));
+    } catch (e) {
+      console.error(e);
+      setSaveStatus('⚠ No se pudo guardar: ' + e.message, true);
+    }
+  });
+  return saveChain;
+}
+function setSaveStatus(t, bad) { $('saveStatus').textContent = t; $('saveStatus').style.color = bad ? 'var(--crit)' : ''; }
+
+function renderVault() {
+  $('vaultUnsupported').classList.toggle('hidden', fsSupported);
+  const hasFolder = !!vault.root;
+  const open = unlocked();
+  $('vaultIcon').textContent = open ? '🔓' : '🔒';
+  $('vaultStatus').textContent = !fsSupported ? 'No disponible' : open ? 'Desbloqueado' : hasFolder ? 'Bloqueado' : 'Sin carpeta';
+  $('vaultFolder').textContent = hasFolder ? `Carpeta: ${vault.root.name}/${DATA_DIR}` : '';
+  $('vaultNoFolder').classList.toggle('hidden', !fsSupported || hasFolder);
+  $('vaultUnlock').classList.toggle('hidden', !fsSupported || !hasFolder || open);
+  $('vaultOpen').classList.toggle('hidden', !open);
+  $('vConfirmWrap').classList.toggle('hidden', !vault.isNew);
+  $('vPassLabel').textContent = vault.isNew ? 'Crea una contraseña para los datos' : 'Contraseña';
+  $('btnUnlock').textContent = vault.isNew ? 'Crear y desbloquear' : 'Desbloquear';
+  $('vPass').autocomplete = vault.isNew ? 'new-password' : 'current-password';
+  $('patientsLocked').classList.toggle('hidden', open);
+  $('patientsWrap').classList.toggle('hidden', !open);
+  updateRecButton();
+}
+
+/* Auto-lock after inactivity (never during a recording) */
+['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => { lastActivity = Date.now(); }, { passive: true }));
+setInterval(() => {
+  if (unlocked() && !rec && Date.now() - lastActivity > AUTOLOCK_MS) lockVault();
+}, 30000);
+/* Pick up changes made on another computer */
+window.addEventListener('focus', async () => {
+  if (!unlocked() || rec) return;
+  try { await reloadIndex(); renderPatients(); renderHistory(); } catch (e) { console.warn(e); }
+});
+
+/* One-time move of data saved by the previous (unencrypted) version of this page */
+async function offerMigration() {
+  if (!indexedDB.databases) return;
+  const dbs = await indexedDB.databases();
+  if (!dbs.some(d => d.name === 'emg_fisio')) return;
+  const old = await new Promise((res, rej) => { const r = indexedDB.open('emg_fisio'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  if (!old.objectStoreNames.contains('patients')) { old.close(); return; }
+  const getAll = s => new Promise(res => { const q = old.transaction(s).objectStore(s).getAll(); q.onsuccess = () => res(q.result); q.onerror = () => res([]); });
+  const ps = await getAll('patients'), ss = await getAll('sessions');
+  old.close();
+  if (!ps.length && !ss.length) { indexedDB.deleteDatabase('emg_fisio'); return; }
+  if (!confirm(`Se encontraron ${ps.length} pacientes y ${ss.length} sesiones de la versión anterior (sin cifrar) en este navegador.\n\n¿Pasarlos a la carpeta cifrada y borrarlos del navegador?\n\nDespués revisa que ningún paciente tenga un nombre real (usa "Cambiar código").`)) return;
+  const now = Date.now();
+  for (const p of ps) vault.index.patients[p.id] = { id: p.id, code: String(p.name || 'SIN-CODIGO').slice(0, 20), leg: p.leg, notes: p.notes || '', created: p.created || now, updated: now };
+  for (const s of ss) {
+    await writeFileJSON(vault.sessDir, s.id + '.emg', await encryptJSON(vault.key, { samples: s.samples }));
+    vault.index.sessions[s.id] = { id: s.id, patientId: s.patientId, date: s.date, durMs: s.durMs, notes: s.notes || '', summary: s.summary, updated: now };
+  }
+  await saveIndex();
+  indexedDB.deleteDatabase('emg_fisio');
+  renderPatients(); renderHistory();
+  alert('Datos movidos a la carpeta cifrada ✓');
+}
+
+/* ================= PATIENTS ================= */
+let selectedId = null;
+function renderPatients() {
+  const ul = $('patientList');
+  const list = unlocked() ? livePatients() : [];
+  if (selectedId && !vault.index.patients[selectedId]) selectedId = null;
+  ul.innerHTML = list.length ? '' : '<li class="empty" style="cursor:default">Aún no hay pacientes.</li>';
+  for (const p of list) {
+    const li = document.createElement('li');
+    li.className = p.id === selectedId ? 'sel' : '';
+    li.innerHTML = `${esc(p.code)}<small>Pierna ${esc(p.leg).toLowerCase()}</small>`;
+    li.onclick = () => selectPatient(p.id);
+    ul.appendChild(li);
+  }
+  const p = selectedId && vault.index.patients[selectedId];
+  $('patientInfo').className = p ? '' : 'empty';
+  $('patientInfo').innerHTML = p
+    ? `<b>${esc(p.code)}</b><br><span class="note">Pierna ${esc(p.leg).toLowerCase()} · creado ${new Date(p.created).toLocaleDateString('es-MX')}</span>
+       ${p.notes ? `<p style="margin:6px 0 0">${esc(p.notes)}</p>` : ''}
+       <div class="rec-row" style="margin-top:10px">
+         <button class="small" id="btnRenamePatient">Cambiar código</button>
+         <button class="small danger" id="btnDelPatient">Eliminar paciente</button>
+       </div>`
+    : unlocked() ? 'Ninguno. Selecciona o crea un paciente para grabar sesiones.' : 'Ninguno.';
+  if (p) { $('btnDelPatient').onclick = deletePatient; $('btnRenamePatient').onclick = renamePatient; }
+  updateRecButton();
+}
+async function selectPatient(id) {
+  if (rec) { alertMsg('Detén la grabación antes de cambiar de paciente.'); return; }
+  selectedId = id;
+  renderPatients();
+  await renderHistory();
+}
+function validCode(code) {
+  if (!CODE_RE.test(code)) return 'Usa solo letras, números, "-" o "_" (2 a 20 caracteres, sin espacios). Ej. P-014';
+  if (livePatients().some(p => p.code.toLowerCase() === code.toLowerCase() && p.id !== selectedId)) return 'Ya existe un paciente con ese código.';
+  return '';
+}
+$('btnAddPatient').onclick = async () => {
+  const code = $('pCode').value.trim();
+  selectedId = null;
+  const err = validCode(code);
+  $('pErr').textContent = err;
+  if (err) { $('pCode').focus(); return; }
+  const now = Date.now();
+  const p = { id: uid(), code, leg: $('pLeg').value, notes: $('pNotes').value.trim(), created: now, updated: now };
+  vault.index.patients[p.id] = p;
+  $('pCode').value = ''; $('pNotes').value = '';
+  await saveIndex();
+  selectPatient(p.id);
+};
+async function renamePatient() {
+  const p = vault.index.patients[selectedId]; if (!p) return;
+  const code = (prompt('Nuevo código del paciente (sin nombres):', p.code) || '').trim();
+  if (!code || code === p.code) return;
+  const err = validCode(code); if (err) { alert(err); return; }
+  vault.index.patients[p.id] = { ...p, code, updated: Date.now() };
+  await saveIndex(); renderPatients(); renderHistory();
+}
+async function deletePatient() {
+  const p = vault.index.patients[selectedId];
+  if (!p || !confirm(`¿Eliminar al paciente ${p.code} y TODAS sus sesiones? No se puede deshacer.`)) return;
+  const now = Date.now();
+  for (const s of liveSessions(p.id)) {
+    vault.index.sessions[s.id] = { id: s.id, deleted: true, updated: now };
+    await removeFile(vault.sessDir, s.id + '.emg');
+  }
+  vault.index.patients[p.id] = { id: p.id, deleted: true, updated: now };
+  selectedId = null;
+  await saveIndex();
+  renderPatients(); await renderHistory();
+}
+function alertMsg(m) { $('recStatus').textContent = m; }
+
+/* ================= BLUETOOTH ================= */
+if (!('bluetooth' in navigator)) { $('noBt').classList.remove('hidden'); $('btnConnect').disabled = true; }
+
+let conn = 'off', device = null, cmdChar = null, userDisconnect = false, demoTimer = null;
+$('btnConnect').onclick = async () => {
+  stopDemo();
+  try {
+    setConn('connecting');
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [SVC_UUID] }, { namePrefix: 'EMG' }],
+      optionalServices: [SVC_UUID],
+    });
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+    userDisconnect = false;
+    await connectGatt();
+  } catch (e) {
+    console.warn(e);
+    setConn('off', e.name === 'NotFoundError' ? '' : 'No se pudo conectar: ' + e.message);
+  }
+};
+async function connectGatt() {
+  const server = await device.gatt.connect();
+  const svc = await server.getPrimaryService(SVC_UUID);
+  const dataChar = await svc.getCharacteristic(DATA_UUID);
+  cmdChar = await svc.getCharacteristic(CMD_UUID);
+  dataChar.addEventListener('characteristicvaluechanged', e => onPacket(e.target.value));
+  await dataChar.startNotifications();
+  setConn('on');
+}
+async function onDisconnected() {
+  cmdChar = null;
+  if (userDisconnect || !device) { setConn('off'); return; }
+  for (let i = 1; i <= 5; i++) {
+    setConn('reconnecting', `Intento ${i} de 5`);
+    await new Promise(r => setTimeout(r, 1500 * i));
+    try { await connectGatt(); return; } catch (e) { console.warn(e); }
+  }
+  setConn('off', 'Se perdió la conexión. Revisa que el EMG esté encendido y cerca.');
+}
+$('btnDisconnect').onclick = () => {
+  userDisconnect = true;
+  if (conn === 'demo') { stopDemo(); setConn('off'); return; }
+  if (device && device.gatt.connected) device.gatt.disconnect(); else setConn('off');
+};
+$('btnRecal').onclick = async () => {
+  if (conn === 'demo') { demoRecal(); return; }
+  if (!cmdChar) return;
+  try {
+    const cmd = new Uint8Array(['C'.charCodeAt(0)]);
+    if (cmdChar.writeValueWithoutResponse) await cmdChar.writeValueWithoutResponse(cmd);
+    else await cmdChar.writeValue(cmd);
+    alertMsg('Recalibración enviada. El paciente debe relajar la pierna (ver LCD).');
+  } catch (e) { alertMsg('No se pudo enviar la recalibración: ' + e.message); }
+};
+function onPacket(dv) {
+  if (dv.byteLength < 17) return;
+  handleSample({ rms: dv.getFloat32(4, true), rest: dv.getFloat32(8, true), thr: dv.getFloat32(12, true), state: dv.getUint8(16) });
+}
+function setConn(s, msg = '') {
+  conn = s;
+  const map = {
+    off: ['Desconectado', 'var(--muted)'],
+    connecting: ['Conectando…', 'var(--warn)'],
+    reconnecting: ['Reconectando…', 'var(--warn)'],
+    on: ['Conectado' + (device && device.name ? ' · ' + device.name : ''), 'var(--good)'],
+    demo: ['Modo demo (datos simulados)', 'var(--info)'],
+  };
+  $('connText').textContent = map[s][0];
+  $('connDot').style.background = map[s][1];
+  $('connMeta').textContent = msg;
+  const active = s === 'on' || s === 'demo';
+  $('btnDisconnect').disabled = s === 'off';
+  $('btnConnect').disabled = active || s === 'connecting' || !('bluetooth' in navigator);
+  $('btnRecal').disabled = !active;
+  if (s === 'off' && rec) stopRecording(true);
+  updateRecButton();
+}
+
+/* ================= DEMO MODE ================= */
+let demo = { t: 0, rest: 18, thr: 30, calUntil: 0 };
+$('btnDemo').onclick = () => {
+  if (conn === 'on') { alertMsg('Desconecta el Bluetooth para usar el modo demo.'); return; }
+  if (demoTimer) { stopDemo(); setConn('off'); return; }
+  setConn('demo');
+  demoTimer = setInterval(() => {
+    demo.t += 0.1;
+    if (performance.now() < demo.calUntil) { handleSample({ rms: 0, rest: demo.rest, thr: demo.thr, state: 3 }); return; }
+    const cyc = demo.t % 6;
+    const effort = cyc > 3 && cyc < 5 ? Math.sin((cyc - 3) / 2 * Math.PI) : 0;
+    const rms = 9 + Math.random() * 6 + effort * (35 + (demo.boost || 0) + 10 * Math.sin(demo.t / 30));
+    const state = rms < demo.rest ? 0 : rms < demo.thr ? 1 : 2;
+    handleSample({ rms, rest: demo.rest, thr: demo.thr, state });
+  }, 100);
+};
+function stopDemo() { if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } }
+function demoRecal() { demo.calUntil = performance.now() + 12000; alertMsg('Recalibración (demo).'); }
+
+/* ================= LIVE DATA ================= */
+let live = [], lastPacketAt = 0, packetTimes = [], current = null, liveDirty = false;
+function handleSample(s) {
+  const now = performance.now();
+  s.t = now / 1000;
+  current = s; lastPacketAt = now; packetTimes.push(now);
+  live.push(s);
+  const cutoff = s.t - LIVE_WINDOW_S - 1;
+  while (live.length && live[0].t < cutoff) live.shift();
+  if (rec) recordSample(s, now);
+  liveDirty = true;
+}
+function renderLive() {
+  const now = performance.now();
+  packetTimes = packetTimes.filter(t => now - t < 2000);
+  $('rateNow').textContent = (conn === 'on' || conn === 'demo') ? fmt(packetTimes.length / 2, 1) : '–';
+  if (conn === 'on' && lastPacketAt && now - lastPacketAt > 3000) {
+    $('connMeta').textContent = `Sin datos hace ${Math.round((now - lastPacketAt) / 1000)} s (¿calibrando o fuera de alcance?)`;
+  } else if (conn === 'on') $('connMeta').textContent = '';
+
+  if (current) {
+    const st = STATES[current.state] || STATES[0];
+    const cal = current.state === 3;
+    $('rmsNow').textContent = cal ? '–' : fmt(current.rms);
+    $('rmsPct').textContent = cal || !current.thr ? ' ' : `${Math.round(current.rms / current.thr * 100)} % del umbral`;
+    $('stateText').textContent = st.name;
+    $('stateDot').style.background = st.color;
+    $('restNow').textContent = fmt(current.rest);
+    $('thrNow').textContent = fmt(current.thr);
+  }
+  if (liveDirty || liveChart.hoverX != null) {
+    liveDirty = false;
+    const tNow = now / 1000;
+    const pts = live.filter(s => s.state !== 3).map(s => [s.t - tNow, s.rms]);
+    const lines = current && current.state !== 3 ? [
+      { v: current.rest, label: 'Reposo ' + fmt(current.rest) },
+      { v: current.thr, label: 'Umbral ' + fmt(current.thr), strong: true },
+    ] : [];
+    liveChart.draw({ pts, xMin: -LIVE_WINDOW_S, xMax: 0, lines, xFmt: x => fmt(x, 0) + ' s', tip: p => `${fmt(-p[0], 1)} s atrás · RMS ${fmt(p[1])}` });
+  }
+  if (rec) renderRecStats();
+  requestAnimationFrame(renderLive);
+}
+
+/* ================= RECORDING ================= */
+let rec = null;
+function updateRecButton() {
+  const active = conn === 'on' || conn === 'demo';
+  const btn = $('btnRec');
+  btn.disabled = !rec && !(active && selectedId && unlocked());
+  btn.textContent = rec ? 'Detener y guardar' : 'Iniciar grabación';
+  btn.classList.toggle('danger', !!rec);
+  btn.classList.toggle('primary', !rec);
+  if (!rec) {
+    alertMsg(!unlocked() ? 'Desbloquea los datos para grabar.' : !selectedId ? 'Selecciona un paciente para grabar.' : !active ? 'Conecta el EMG para grabar.' : 'Listo para grabar.');
+  }
+}
+$('btnRec').onclick = () => rec ? stopRecording(false) : startRecording();
+function startRecording() {
+  rec = { start: performance.now(), startDate: Date.now(), samples: [], count: 0,
+    inValid: false, validStart: 0, lastValidEnd: -1e9, durations: [], stateMs: [0, 0, 0], lastT: null, sum: 0, n: 0, max: 0 };
+  updateRecButton();
+  $('recStatus').innerHTML = '<span class="rec-on">● Grabando</span>';
+}
+function recordSample(s, now) {
+  const t = now - rec.start;
+  rec.samples.push([Math.round(t), +s.rms.toFixed(2), +s.rest.toFixed(2), +s.thr.toFixed(2), s.state]);
+  if (s.state === 3) { rec.lastT = t; return; }
+  if (rec.lastT != null && s.state < 3) rec.stateMs[s.state] += Math.min(t - rec.lastT, 500);
+  rec.lastT = t;
+  rec.sum += s.rms; rec.n++; rec.max = Math.max(rec.max, s.rms);
+  if (s.state === 2 && !rec.inValid) {
+    rec.inValid = true;
+    if (t - rec.lastValidEnd > 300) { rec.count++; rec.validStart = t; }
+  } else if (s.state !== 2 && rec.inValid) {
+    rec.inValid = false; rec.lastValidEnd = t;
+    rec.durations.push(t - rec.validStart);
+  }
+}
+function summarize(r) {
+  const total = r.stateMs[0] + r.stateMs[1] + r.stateMs[2] || 1;
+  const d = r.durations.length ? r.durations.reduce((a, b) => a + b, 0) / r.durations.length : null;
+  return { count: r.count, max: r.n ? r.max : null, avg: r.n ? r.sum / r.n : null, avgDurMs: d, pct: r.stateMs.map(x => x / total * 100) };
+}
+function renderRecStats() {
+  $('recTimer').textContent = mmss(performance.now() - rec.start);
+  const s = summarize(rec);
+  $('stCount').textContent = s.count;
+  $('stMax').textContent = fmt(s.max);
+  $('stAvg').textContent = fmt(s.avg);
+  $('stDur').textContent = s.avgDurMs == null ? '–' : fmt(s.avgDurMs / 1000, 1) + ' s';
+  renderStateBar($('stBar'), $('stBarLegend'), s.pct);
+}
+function renderStateBar(bar, legend, pct) {
+  bar.innerHTML = [0, 1, 2].map(i => `<div style="width:${pct[i]}%;background:${STATES[i].color}" title="${STATES[i].name} ${fmt(pct[i], 0)} %"></div>`).join('');
+  legend.innerHTML = [0, 1, 2].map(i => `<span style="margin-right:12px"><span class="dot" style="display:inline-block;width:8px;height:8px;background:${STATES[i].color}"></span> ${STATES[i].name} ${fmt(pct[i], 0)} %</span>`).join('');
+}
+async function stopRecording(lostConnection) {
+  const r = rec; rec = null;
+  if (!r) return;
+  if (r.samples.length < 5) { updateRecButton(); alertMsg('Grabación muy corta, no se guardó.'); return; }
+  const id = uid(), now = Date.now();
+  try {
+    await writeFileJSON(vault.sessDir, id + '.emg', await encryptJSON(vault.key, { samples: r.samples }));
+    vault.index.sessions[id] = {
+      id, patientId: selectedId, date: r.startDate, durMs: performance.now() - r.start,
+      notes: $('sessNotes').value.trim(), summary: summarize(r), updated: now,
+    };
+    await saveIndex();
+    $('sessNotes').value = '';
+    updateRecButton();
+    alertMsg(lostConnection ? 'Se perdió la conexión: la sesión se guardó hasta ese momento.' : 'Sesión guardada y cifrada ✓');
+  } catch (e) {
+    console.error(e);
+    updateRecButton();
+    alertMsg('⚠ No se pudo guardar la sesión: ' + e.message);
+  }
+  await renderHistory();
+}
+
+/* ================= HISTORY ================= */
+let sessions = [];
+async function renderHistory() {
+  const tb = $('sessTable');
+  tb.innerHTML = '';
+  $('sessViewCard').classList.add('hidden');
+  sessions = unlocked() && selectedId ? liveSessions(selectedId) : [];
+  $('btnCsvAll').disabled = !sessions.length;
+  $('sessEmpty').textContent = !unlocked() ? 'Desbloquea los datos para ver el historial.' : !selectedId ? 'Selecciona un paciente para ver sus sesiones.' : 'Este paciente aún no tiene sesiones.';
+  $('sessEmpty').classList.toggle('hidden', sessions.length > 0);
+  for (const s of [...sessions].reverse()) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${new Date(s.date).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</td>
+      <td class="num">${mmss(s.durMs)}</td><td class="num">${s.summary.count}</td>
+      <td class="num">${fmt(s.summary.max)}</td><td class="num">${fmt(s.summary.avg)}</td>
+      <td>${esc(s.notes)}</td>
+      <td style="white-space:nowrap"><button class="small" data-a="view">Ver</button>
+      <button class="small" data-a="csv">CSV</button>
+      <button class="small danger" data-a="del">Eliminar</button></td>`;
+    tr.querySelector('[data-a=view]').onclick = () => viewSession(s);
+    tr.querySelector('[data-a=csv]').onclick = () => downloadSessionCSV(s);
+    tr.querySelector('[data-a=del]').onclick = async () => {
+      if (!confirm('¿Eliminar esta sesión? No se puede deshacer.')) return;
+      vault.index.sessions[s.id] = { id: s.id, deleted: true, updated: Date.now() };
+      await removeFile(vault.sessDir, s.id + '.emg');
+      await saveIndex(); renderHistory();
+    };
+    tb.appendChild(tr);
+  }
+  const labels = sessions.map(s => new Date(s.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }));
+  const idxFmt = x => labels[Math.round(x)] != null ? `#${Math.round(x) + 1} · ${labels[Math.round(x)]}` : '';
+  const xMax = Math.max(sessions.length - 0.7, 0.7);
+  progMax.draw({ pts: sessions.map((s, i) => [i, s.summary.max ?? 0]), xMin: -0.3, xMax, points: true,
+    xFmt: idxFmt, xTicks: sessions.map((_, i) => i), empty: 'Sin sesiones todavía',
+    tip: p => `${new Date(sessions[p[0]].date).toLocaleDateString('es-MX')} · RMS máx ${fmt(p[1])}` });
+  progCount.draw({ pts: sessions.map((s, i) => [i, s.summary.count]), xMin: -0.3, xMax, points: true,
+    xFmt: idxFmt, xTicks: sessions.map((_, i) => i), empty: 'Sin sesiones todavía', yFmt: v => fmt(v, 0), intY: true,
+    tip: p => `${new Date(sessions[p[0]].date).toLocaleDateString('es-MX')} · ${p[1]} contracciones` });
+  renderCompareChips();
+}
+async function loadSamples(s) {
+  const box = await readFileJSON(vault.sessDir, s.id + '.emg');
+  if (!box) throw new Error('No se encontró el archivo de la sesión (¿todavía se está sincronizando?).');
+  return (await decryptJSON(vault.key, box)).samples;
+}
+async function viewSession(s) {
+  let samples;
+  try { samples = await loadSamples(s); } catch (e) { alert(e.message); return; }
+  $('sessViewCard').classList.remove('hidden');
+  $('sessViewTitle').textContent = `Sesión del ${new Date(s.date).toLocaleString('es-MX')} · ${s.summary.count} contracciones válidas`;
+  const valid = samples.filter(x => x[4] !== 3);
+  const pts = valid.map(x => [x[0] / 1000, x[1]]);
+  const last = valid[valid.length - 1];
+  sessChart.draw({ pts, xMin: 0, xMax: Math.max(s.durMs / 1000, 1),
+    lines: last ? [{ v: last[2], label: 'Reposo ' + fmt(last[2]) }, { v: last[3], label: 'Umbral ' + fmt(last[3]), strong: true }] : [],
+    minXStep: 1, xFmt: x => s.durMs < 60000 ? fmt(x, 0) + ' s' : mmss(x * 1000), tip: p => `${mmss(p[0] * 1000)} · RMS ${fmt(p[1])}` });
+  $('sessViewCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ================= COMPARE SESSIONS ================= */
+// Categorical colors in fixed order; each selected session keeps its color until it's removed
+const CMP_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'];
+const CMP_DARK  = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'];
+const CMP_MAX = 6;
+let cmpSel = new Map();          // sessionId -> color slot
+let cmpPatient = null;
+const sampleCache = new Map();   // decrypted samples, only in memory while unlocked
+const cmpColor = slot => (matchMedia('(prefers-color-scheme: dark)').matches ? CMP_DARK : CMP_LIGHT)[slot];
+const shortDate = d => new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+
+async function getSamples(s) {
+  if (!sampleCache.has(s.id)) sampleCache.set(s.id, await loadSamples(s));
+  return sampleCache.get(s.id);
+}
+// Key values computed from the raw samples (same contraction rule as during recording)
+function analyze(samples) {
+  let max = 0, sum = 0, n = 0, count = 0, inValid = false, start = 0, lastEnd = -1e9, lastT = null;
+  const durs = [], stateMs = [0, 0, 0];
+  for (const [t, rms, , , st] of samples) {
+    if (st === 3) { lastT = t; continue; }
+    if (lastT != null) stateMs[st] += Math.min(t - lastT, 500);
+    lastT = t; sum += rms; n++; if (rms > max) max = rms;
+    if (st === 2 && !inValid) { inValid = true; if (t - lastEnd > 300) { count++; start = t; } }
+    else if (st !== 2 && inValid) { inValid = false; lastEnd = t; durs.push(t - start); }
+  }
+  if (inValid && lastT != null) durs.push(lastT - start);
+  const total = stateMs[0] + stateMs[1] + stateMs[2] || 1;
+  const valid = samples.filter(x => x[4] !== 3 && x[3] > 0);
+  const maxPct = valid.length ? Math.max(...valid.map(x => x[1] / x[3] * 100)) : null;
+  return {
+    max: n ? max : null, avg: n ? sum / n : null, maxPct, count,
+    longest: durs.length ? Math.max(...durs) : null,
+    avgDur: durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length : null,
+    pctValid: stateMs[2] / total * 100,
+  };
+}
+
+function renderCompareChips() {
+  if (cmpPatient !== selectedId) { cmpSel = new Map(); cmpPatient = selectedId; }
+  for (const id of [...cmpSel.keys()]) if (!sessions.some(s => s.id === id)) cmpSel.delete(id);
+  const box = $('cmpChips');
+  box.innerHTML = sessions.length ? '' : '<span class="empty">Sin sesiones para comparar.</span>';
+  $('btnCmpLast').disabled = $('btnCmpClear').disabled = !sessions.length;
+  for (const s of sessions) {
+    const on = cmpSel.has(s.id), full = !on && cmpSel.size >= CMP_MAX;
+    const lab = document.createElement('label');
+    lab.className = 'chip' + (on ? ' on' : '') + (full ? ' dis' : '');
+    lab.title = full ? `Máximo ${CMP_MAX} sesiones` : '';
+    lab.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''} ${full ? 'disabled' : ''}>
+      ${on ? `<span class="sw" style="background:${cmpColor(cmpSel.get(s.id))}"></span>` : ''}
+      ${shortDate(s.date)} · ${new Date(s.date).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
+    lab.querySelector('input').onchange = e => { toggleCmp(s.id, e.target.checked); };
+    box.appendChild(lab);
+  }
+  renderCompare();
+}
+function toggleCmp(id, on) {
+  if (on) {
+    const used = new Set(cmpSel.values());
+    let slot = 0; while (used.has(slot)) slot++;
+    if (slot < CMP_MAX) cmpSel.set(id, slot);
+  } else cmpSel.delete(id);
+  renderCompareChips();
+}
+$('btnCmpLast').onclick = () => {
+  cmpSel = new Map();
+  sessions.slice(-3).forEach((s, i) => cmpSel.set(s.id, i));
+  renderCompareChips();
+};
+$('btnCmpClear').onclick = () => { cmpSel = new Map(); renderCompareChips(); };
+$('cmpMode').onchange = () => renderCompare();
+
+let cmpRenderId = 0;
+async function renderCompare() {
+  const myId = ++cmpRenderId;
+  const sel = sessions.filter(s => cmpSel.has(s.id));   // chronological
+  $('cmpEmpty').classList.toggle('hidden', sel.length > 0);
+  $('cmpBody').classList.toggle('hidden', sel.length === 0);
+  if (!sel.length) return;
+  const pct = $('cmpMode').value === 'pct';
+  const items = [];
+  for (const s of sel) {
+    try { const samples = await getSamples(s); items.push({ s, samples, m: analyze(samples), color: cmpColor(cmpSel.get(s.id)) }); }
+    catch (e) { items.push({ s, samples: [], m: analyze([]), color: cmpColor(cmpSel.get(s.id)), err: e.message }); }
+  }
+  if (myId !== cmpRenderId) return;   // a newer render started meanwhile
+
+  const series = items.map(it => ({
+    label: shortDate(it.s.date), color: it.color,
+    pts: it.samples.filter(x => x[4] !== 3 && (!pct || x[3] > 0)).map(x => [x[0] / 1000, pct ? x[1] / x[3] * 100 : x[1]]),
+  }));
+  const maxDur = Math.max(1, ...items.map(it => it.s.durMs / 1000));
+  $('cmpChartTitle').textContent = pct
+    ? 'RMS como % del umbral de cada sesión, desde el inicio de la grabación'
+    : 'RMS (unidades ADC), desde el inicio de la grabación';
+  cmpChart.draw({
+    series, xMin: 0, xMax: maxDur, minXStep: 1,
+    lines: pct ? [{ v: 100, label: 'Umbral (100 %)', strong: true }] : [],
+    xFmt: x => maxDur < 60 ? fmt(x, 0) + ' s' : mmss(x * 1000),
+    yFmt: pct ? (v => fmt(v, 0) + '%') : undefined,
+    yTip: v => pct ? fmt(v, 0) + ' %' : fmt(v, 1),
+  });
+  $('cmpLegend').innerHTML = items.map(it =>
+    `<span style="margin-right:14px;white-space:nowrap"><span class="sw" style="background:${it.color}"></span> ${shortDate(it.s.date)}${it.err ? ' ⚠' : ''}</span>`).join('');
+
+  // Key values table: one column per session + change first -> last
+  const sec = ms => ms == null ? '–' : fmt(ms / 1000, 1) + ' s';
+  const rows = [
+    ['RMS máximo', it => fmt(it.m.max), it => it.m.max],
+    ['RMS máx. (% umbral)', it => it.m.maxPct == null ? '–' : fmt(it.m.maxPct, 0) + ' %', it => it.m.maxPct],
+    ['RMS promedio', it => fmt(it.m.avg), it => it.m.avg],
+    ['Contracciones válidas', it => it.m.count, it => it.m.count],
+    ['Contracción más larga', it => sec(it.m.longest), it => it.m.longest],
+    ['Duración prom. contracción', it => sec(it.m.avgDur), it => it.m.avgDur],
+    ['% tiempo en contracción válida', it => fmt(it.m.pctValid, 0) + ' %', it => it.m.pctValid, 'pts'],
+    ['Duración de la sesión', it => mmss(it.s.durMs), it => it.s.durMs, 'neutral'],
+  ];
+  const showDelta = items.length >= 2;
+  // Change from the first to the last selected session (percentage points for values already in %)
+  const delta = (a, b, kind) => {
+    if (a == null || b == null || (kind !== 'pts' && a === 0)) return '–';
+    const d = kind === 'pts' ? b - a : (b - a) / Math.abs(a) * 100;
+    const cls = kind === 'neutral' ? '' : d > 0.5 ? 'delta-up' : d < -0.5 ? 'delta-down' : '';
+    const unit = kind === 'pts' ? ' pts' : ' %';
+    return `<span class="${cls}" style="white-space:nowrap">${d > 0 ? '▲ +' : d < 0 ? '▼ ' : ''}${fmt(d, 0)}${unit}</span>`;
+  };
+  let html = `<thead><tr><th></th>${items.map(it => `<th style="white-space:nowrap"><span class="sw" style="background:${it.color}"></span> ${new Date(it.s.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</th>`).join('')}${showDelta ? '<th>Cambio</th>' : ''}</tr></thead><tbody>`;
+  for (const [name, show, val, kind] of rows) {
+    html += `<tr><td>${name}</td>${items.map(it => `<td class="num">${show(it)}</td>`).join('')}${showDelta ? `<td class="num">${delta(val(items[0]), val(items[items.length - 1]), kind)}</td>` : ''}</tr>`;
+  }
+  html += '</tbody>';
+  $('cmpTable').innerHTML = html + (showDelta ? `<tfoot><tr><td colspan="${items.length + 2}" class="note" style="border:0">Cambio = de la primera a la última sesión seleccionada.</td></tr></tfoot>` : '');
+}
+
+/* ================= CSV (not encrypted: patient code only) ================= */
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+async function downloadSessionCSV(s) {
+  let samples;
+  try { samples = await loadSamples(s); } catch (e) { alert(e.message); return; }
+  const p = vault.index.patients[s.patientId] || {};
+  const st = ['reposo', 'actividad', 'valida', 'calibrando'];
+  const head = [
+    ['Codigo paciente', p.code], ['Pierna', p.leg], ['Fecha', new Date(s.date).toLocaleString('es-MX')],
+    ['Duracion', mmss(s.durMs)], ['Contracciones validas', s.summary.count],
+    ['RMS maximo', fmt(s.summary.max, 2)], ['RMS promedio', fmt(s.summary.avg, 2)], ['Notas', s.notes], [],
+    ['tiempo_s', 'rms', 'limite_reposo', 'umbral', 'estado'],
+  ].map(r => r.map(csvCell).join(',')).join('\n');
+  const rows = samples.map(x => [(x[0] / 1000).toFixed(2), x[1], x[2], x[3], st[x[4]]].join(',')).join('\n');
+  const d = new Date(s.date).toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  download(`EMG_${p.code}_${d}.csv`, '﻿' + head + '\n' + rows, 'text/csv');
+}
+$('btnCsvAll').onclick = () => {
+  const p = vault.index.patients[selectedId];
+  const rows = [['fecha', 'duracion_s', 'contracciones_validas', 'rms_max', 'rms_prom', 'dur_prom_contraccion_s', 'pct_reposo', 'pct_actividad', 'pct_valida', 'notas']];
+  for (const s of sessions) {
+    const m = s.summary;
+    rows.push([new Date(s.date).toLocaleString('es-MX'), (s.durMs / 1000).toFixed(0), m.count, fmt(m.max, 2), fmt(m.avg, 2),
+      m.avgDurMs == null ? '' : (m.avgDurMs / 1000).toFixed(2), fmt(m.pct[0], 0), fmt(m.pct[1], 0), fmt(m.pct[2], 0), s.notes]);
+  }
+  download(`EMG_resumen_${p.code}.csv`, '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\n'), 'text/csv');
+};
+
+/* ================= TABS ================= */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $('tab-live').classList.toggle('hidden', b.dataset.tab !== 'live');
+  $('tab-history').classList.toggle('hidden', b.dataset.tab !== 'history');
+  if (b.dataset.tab === 'history') renderHistory();
+});
+
+/* ================= CHART (canvas line chart with hover) ================= */
+function makeChart(canvas, tip) {
+  const ch = { hoverX: null, last: null };
+  const H0 = +canvas.getAttribute('height');   // fixed display height (px), never changes
+  canvas.style.height = H0 + 'px';
+  const pad = { l: 44, r: 12, t: 12, b: 26 };
+  ch.draw = opts => {
+    ch.last = opts;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.clientWidth, H = H0;
+    const bw = Math.round(W * dpr), bh = Math.round(H * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+    const g = canvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = css('--surface'); g.fillRect(0, 0, W, H);
+    const { xMin, xMax, lines = [] } = opts;
+    const series = opts.series || [{ pts: opts.pts, color: css('--series') }];
+    const pts = series.reduce((a, s) => a.concat(s.pts), []);
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    g.font = '11px system-ui, sans-serif';
+    if (!pts.length) {
+      g.fillStyle = css('--muted'); g.textAlign = 'center';
+      g.fillText(opts.empty || 'Esperando datos…', W / 2, H / 2);
+      tip.style.display = 'none'; return;
+    }
+    let yMax = 1;
+    for (const p of pts) if (p[1] > yMax) yMax = p[1];
+    for (const l of lines) yMax = Math.max(yMax, l.v * 1.15);
+    const step = opts.intY ? Math.max(1, niceStep(yMax / 4)) : niceStep(yMax / 4); yMax = Math.ceil(yMax / step) * step;
+    const X = x => pad.l + (x - xMin) / (xMax - xMin) * pw;
+    const Y = y => pad.t + ph - y / yMax * ph;
+    g.strokeStyle = css('--grid'); g.lineWidth = 1; g.fillStyle = css('--muted'); g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (let v = 0; v <= yMax + 1e-9; v += step) {
+      g.beginPath(); g.moveTo(pad.l, Math.round(Y(v)) + .5); g.lineTo(W - pad.r, Math.round(Y(v)) + .5); g.stroke();
+      g.fillText((opts.yFmt || (n => fmt(n, step < 1 ? 1 : 0)))(v), pad.l - 6, Y(v));
+    }
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    const ticks = opts.xTicks || linTicks(xMin, xMax, Math.max(2, Math.floor(pw / 90)), opts.minXStep || 0);
+    const every = Math.ceil(ticks.length / Math.max(1, Math.floor(pw / 60)));
+    ticks.forEach((x, i) => { if (i % every === 0) g.fillText(opts.xFmt(x), X(x), H - pad.b + 7); });
+    for (const l of lines) {
+      g.setLineDash([5, 4]); g.strokeStyle = l.strong ? css('--ink2') : css('--muted'); g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(pad.l, Y(l.v)); g.lineTo(W - pad.r, Y(l.v)); g.stroke(); g.setLineDash([]);
+      g.fillStyle = l.strong ? css('--ink2') : css('--muted'); g.textAlign = 'left'; g.textBaseline = 'bottom';
+      g.fillText(l.label, pad.l + 6, Y(l.v) - 3);
+    }
+    g.lineWidth = 2; g.lineJoin = 'round';
+    for (const s of series) {
+      g.strokeStyle = s.color;
+      g.beginPath(); s.pts.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke();
+    }
+    if (opts.points) for (const p of pts) {
+      g.fillStyle = css('--series'); g.strokeStyle = css('--surface'); g.lineWidth = 2;
+      g.beginPath(); g.arc(X(p[0]), Y(p[1]), 5, 0, 7); g.fill(); g.stroke();
+    }
+    if (ch.hoverX != null && opts.series) {
+      // multi-series hover: one marker per series at the same time, one tooltip listing all
+      const xv = xMin + (ch.hoverX - pad.l) / pw * (xMax - xMin);
+      const hx = X(Math.min(Math.max(xv, xMin), xMax));
+      g.strokeStyle = css('--muted'); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(hx, pad.t); g.lineTo(hx, pad.t + ph); g.stroke();
+      const rows = [];
+      for (const s of series) {
+        if (!s.pts.length || xv < s.pts[0][0] - 0.5 || xv > s.pts[s.pts.length - 1][0] + 0.5) continue;
+        let best = s.pts[0]; for (const p of s.pts) if (Math.abs(p[0] - xv) < Math.abs(best[0] - xv)) best = p;
+        g.fillStyle = s.color; g.strokeStyle = css('--surface'); g.lineWidth = 2;
+        g.beginPath(); g.arc(X(best[0]), Y(best[1]), 5, 0, 7); g.fill(); g.stroke();
+        rows.push(`<div><span class="sw" style="background:${s.color}"></span> ${esc(s.label)}: <b>${opts.yTip(best[1])}</b></div>`);
+      }
+      if (rows.length) {
+        tip.innerHTML = `<div style="color:var(--ink2);margin-bottom:2px">${opts.xFmt(xv)}</div>` + rows.join('');
+        tip.style.display = 'block';
+        const tw = tip.offsetWidth;
+        tip.style.left = (hx + 12 + tw > W ? hx - tw - 12 : hx + 12) + 'px';
+        tip.style.top = pad.t + 'px';
+      } else tip.style.display = 'none';
+    } else if (ch.hoverX != null) {
+      const xv = xMin + (ch.hoverX - pad.l) / pw * (xMax - xMin);
+      let best = pts[0]; for (const p of pts) if (Math.abs(p[0] - xv) < Math.abs(best[0] - xv)) best = p;
+      const hx = X(best[0]), hy = Y(best[1]);
+      g.strokeStyle = css('--muted'); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(hx, pad.t); g.lineTo(hx, pad.t + ph); g.stroke();
+      g.fillStyle = css('--series'); g.strokeStyle = css('--surface'); g.lineWidth = 2;
+      g.beginPath(); g.arc(hx, hy, 5, 0, 7); g.fill(); g.stroke();
+      tip.textContent = opts.tip(best);
+      tip.style.display = 'block';
+      const tw = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(hx - tw / 2, 0), W - tw) + 'px';
+      tip.style.top = Math.max(hy - 40, 0) + 'px';
+    } else tip.style.display = 'none';
+  };
+  const redraw = () => ch.last && ch.draw(ch.last);
+  canvas.addEventListener('pointermove', e => { const r = canvas.getBoundingClientRect(); ch.hoverX = e.clientX - r.left; redraw(); });
+  canvas.addEventListener('pointerleave', () => { ch.hoverX = null; redraw(); });
+  window.addEventListener('resize', redraw);
+  return ch;
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function linTicks(a, b, n, minStep = 0) { const s = Math.max(minStep, niceStep((b - a) / n)); const out = []; for (let x = Math.ceil(a / s) * s; x <= b + 1e-9; x += s) out.push(+x.toFixed(6)); return out; }
+
+const liveChart = makeChart($('liveChart'), $('liveTip'));
+const sessChart = makeChart($('sessChart'), $('sessTip'));
+const progMax = makeChart($('progMax'), $('progMaxTip'));
+const progCount = makeChart($('progCount'), $('progCountTip'));
+const cmpChart = makeChart($('cmpChart'), $('cmpTip'));
+
+/* ================= START ================= */
+(async () => {
+  if (fsSupported) {
+    try {
+      vault.root = await cfgGet('root') || null;
+      if (vault.root) {
+        // Only read the folder structure if permission is still granted; otherwise wait for "Desbloquear"
+        if (!vault.root.queryPermission || await vault.root.queryPermission({ mode: 'readwrite' }) === 'granted') await openDataDirs();
+      }
+    } catch (e) { console.warn(e); }
+  }
+  renderVault();
+  renderPatients();
+  await renderHistory();
+  setConn('off');
+  requestAnimationFrame(renderLive);
+})();
+</script>
+</body>
+</html>
