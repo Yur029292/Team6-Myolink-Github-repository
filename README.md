@@ -14,6 +14,6 @@ M04	@example-user-4	protocol and cue video	another tool, named here
 |Member|GitHub|In charge of|AI tool|
 |-----|-----|-----|-----|
 |Yurem|yur029292|code and versions	Visual Studio with Claude|Claude|
-|Alejandra|     |     |     |
+|Alejandra|a01779350|data and metadata|Claude|
 |Mariana|     |     |     |
 |James|     |     |     |
