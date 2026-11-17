@@ -10,3 +10,10 @@ M01	@example-user-1	data and metadata	Claude Desktop
 M02	@example-user-2	code and versions	Visual Studio Code with Claude
 M03	@example-user-3	quality report	Claude in the browser
 M04	@example-user-4	protocol and cue video	another tool, named here
+
+|     |     |     |     |
+|-----|-----|-----|-----|
+|     |     |     |     |
+|     |     |     |     |
+|     |     |     |     |
+|     |     |     |     |
