@@ -11,9 +11,9 @@ M02	@example-user-2	code and versions	Visual Studio Code with Claude
 M03	@example-user-3	quality report	Claude in the browser
 M04	@example-user-4	protocol and cue video	another tool, named here
 
-|     |     |     |     |
+|Member|GitHub|In charge of|AI tool|
 |-----|-----|-----|-----|
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
-|     |     |     |     |
+|Yurem|yur029292|code and versions	Visual Studio with Claude|Claude|
+|Alejandra|     |     |     |
+|Mariana|     |     |     |
+|James|     |     |     |
