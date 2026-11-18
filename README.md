@@ -57,7 +57,7 @@ Every member has at least one commit. See the commit list of this repository. We
 ### 2. Task
 The person pushes the palm up against the edge of a table and holds it, without moving the arm (isometric elbow flexion). Two classes: movement and rest. The person sits, with the elbow and forearm rested on the seated leg, elbow at 90° and palm up against the underside of the table.
 
-**Evidence:** `PROTOCOL.md`, `figures/placement_S01.jpg`.
+**Evidence:** `PROTOCOL.md`, `figures/placement_S01.jpeg`.
 
 ### 3. Trial and cue timing
 | Window | Seconds | What the person sees |
