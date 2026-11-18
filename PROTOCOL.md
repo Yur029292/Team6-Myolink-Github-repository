@@ -29,9 +29,4 @@ Merletti R. *Standards for Reporting EMG Data.* ISEK, 1999.\
 De Luca CJ, Gilmore LD, Kuznetsov M, Roy SH. *Filtering the surface EMG signal: movement artifact and baseline noise contamination.* J Biomech 43(8), 2010.
 
 ## We read the method and we agree
-Each member adds their own line from their own GitHub account.
-
-- M01, 2026-11-17, I read the method and I agree.
-- M02, 2026-11-17, I read the method and I agree.
-- M03, 2026-11-17, I read the method and I agree.
-- M04, 2026-11-17, I read the method and I agree.
+- M02, 2026-11-18, I read the method and I agree.
