@@ -4,50 +4,21 @@ Primer repositorio de github para probar su funcionamiento // dummy
 Añadi codigos Robot_Test
 en cada etapa de avance del codigo de la garra robotica
 
-# EMG Biceps — Data Stage (M6 Machine Learning and IoT Apps, Report 1)
+
+# Report 1, the data stage
 One person, one movement, one model. We record surface EMG from the biceps brachii of one person with a sensor circuit we built ourselves and an Arduino Uno R4 WiFi. We train a model to tell movement from rest, and we test it on sessions with new electrodes that the model never saw. Goal: more than 75 % correct on unseen sessions.
 
-## Completed Parts
-|Part|Our Answer|
-|-----|-----|
-|1 Data acquisition|18 recordings, 144 N trials, 6 sessions, 1 person. 3 Ag/AgCl gel electrodes 2 cm apart on the left biceps, reference on the elbow. Our own amplifier circuit, read by an Arduino Uno R4 WiFi at 500 samples per second, 14-bit ADC. Raw signal, not smoothed.|
-|2 Task|Isometric elbow flexion: forearm laying on horizontal surface under the table, elbow at 90°, palm up, push up against the table edge without moving the arm. Two classes: movement and rest.|
-|3 Trial and cue timing|Rest 5 s, warning 3 s, movement 5 s, pause 1 s. 8 trials in one recording. The person follows LED and LCD cues on the Arduino (see cue video).|
-|4 Sessions|6 sessions on 2 days, 3 recordings each. New electrodes in every session. Pilot recordings (arm lifting a water bottle) saturated the amplifier and are not in the dataset.|
-|5 Cleaning|Offset removal, band-pass 26–433 Hz. We reject a trial if a sample hits the ADC limit, samples are late or missing, or the amplifier saturates. ✏️ N of 144 trials rejected.|
-|6 Fair split|Sessions 1 to 4 train the model. Sessions 5 and 6 test it. No session is in both.|
-
 ## Team 6 Application of Bioinstrumentation Technologies Roles
-|Member|GitHub|In charge of|AI tool|
+|Member code|GitHub user|In charge of|AI tool|
 |-----|-----|-----|-----|
-|Yurem|yur029292|code and versions|Visual Studio with Claude|
-|Alejandra|a01779350-coder|quality report|Claude|
-|Mariana|     |quality report|Claude|
-|James|jamesmorrisey123|protocol and cue video|Clause|
+|M01|yur029292|code and versions|Visual Studio with Claude|
+|M02|a01779350-coder|quality report|Claude|
+|M03|     |code and versions|Claude|
+|M04|jamesmorrisey123|protocol and cue video|Claude|
 
+We measure one person, member M01. In the data that person has the code P01.
 
-18 recordings, ✏️ N trials, 6 sessions, 1 person. One pair of Ag/AgCl gel electrodes ✏️, 2 cm apart, on the biceps brachii of the right arm, with the reference on the wrist bone. Our own amplifier circuit (AD620, 8th-order band-pass 26–433 Hz, total gain 300, 2.5 V offset) feeds pin A0 of an Arduino Uno R4 WiFi. 14-bit converter, sampled at 500 Hz, measured from the t_us column. The sensor gives the raw signal, not a smoothed one. The person follows the LED and LCD cue, shown in cue/cue-video.mp4. One trial lasts 14 s.
-
-Evidence: data/raw/ (18 files), data/metadata.csv (18 rows), cue/.
-
-# Example: Report 1, the data stage
-
-> **This is an example.** Every number here is invented, and the files in `data/raw/` are empty. It shows what your own repository should hold and how short your answers can be. Do not copy the values. Your own protocol will differ.
-
-Course: M6 Machine Learning and IoT apps. Project: tell a hand movement from rest with one muscle signal.
-
-## The team
-
-| Member code | GitHub user | In charge of | AI tool |
-|---|---|---|---|
-| M01 | @example-user-1 | data and metadata | Claude Desktop |
-| M02 | @example-user-2 | code and versions | Visual Studio Code with Claude |
-| M03 | @example-user-3 | quality report | Claude in the browser |
-| M04 | @example-user-4 | protocol and cue video | another tool, named here |
-
-Every member has at least one commit. See the commit list of this repository. We measure one person, member M01. In the data that person has the code P01.
-
-## The six parts
+## The Six Parts
 
 ### 1. Data acquisition
 18 recordings, 144 trials, 6 sessions, 1 person. One pair of Ag/AgCl gel electrodes, 2 cm apart, on the biceps brachii of the left arm, with the reference on the elbow. Our own amplifier circuit (AD620, 8th-order band-pass 26–433 Hz, total gain 300, 2.5 V offset) feeds pin A0 of an Arduino Uno R4 WiFi. 14-bit converter, sampled at 500 Hz, measured from the t_us column. The sensor gives the raw signal, not a smoothed one. The person follows the LED and LCD cue, shown in cue/cue-video.mp4. One trial lasts 14 s.
@@ -65,7 +36,7 @@ The person pushes the palm up against the edge of a table and holds it, without 
 | Rest before | 0 to 5 | Red LED, screen: "RELAJA EL BRAZO Trial X/8" |
 | Warning cue | 5 to 8 | Yellow LED, screen: "AL VERDE EMPUJA Empuja en: 3...2...1" |
 | Action window | 8 to 13 | Green LED, screen: "AL VERDE EMPUJA Empuja YA!" |
-| Rest between trials | 13 to 14 | Red LED, screen: "RELAJA EL BRAZO Trial X+1/8" |
+| Rest between trials | 13 to 14 | Red LED, screen: "RELAJA EL BRAZO Trial (X+1)/8" |
 
 One recording holds 8 trials, so it lasts 112 s. Per trial: 5 s of movement and 6 s of rest.
 
