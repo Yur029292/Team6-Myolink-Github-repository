@@ -1,5 +1,6 @@
-# Code (example)
+# Code Files
 
+- `emg_fisio.html` is the HTML code for the Bluetooth data transmission from the emg and displays the data for the physio via chrome. This was created by James
 - `record_emg.ino` reads the sensor on the microcontroller and prints `time_ms,emg_adc`. Empty in this example.
 - `check_quality.py` applies the rule of `QUALITY-REPORT.md` to every file in `data/raw/`. Empty in this example.
 
