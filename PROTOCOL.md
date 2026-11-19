@@ -32,3 +32,4 @@ De Luca CJ, Gilmore LD, Kuznetsov M, Roy SH. *Filtering the surface EMG signal: 
 - M01, 2026-11-18, I read the method and I agree.
 - M02, 2026-11-18, I read the method and I agree.
 - M03, 2026-11-18, I read the method and I agree.
+- M04, 2026-11-18, I read the method and I agree.
