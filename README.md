@@ -1,20 +1,13 @@
-# Test-1-Github-repository
-Primer repositorio de github para probar su funcionamiento // dummy
-
-Añadi codigos Robot_Test
-en cada etapa de avance del codigo de la garra robotica
-
-
 # Report 1, the data stage
 One person, one movement, one model. We record surface EMG from the biceps brachii of one person with a sensor circuit we built ourselves and an Arduino Uno R4 WiFi. We train a model to tell movement from rest, and we test it on sessions with new electrodes that the model never saw. Goal: more than 75 % correct on unseen sessions.
 
 ## Team 6 Application of Bioinstrumentation Technologies Roles
 |Member code|GitHub user|In charge of|AI tool|
 |-----|-----|-----|-----|
-|M01|yur029292|code and versions|Visual Studio with Claude|
-|M02|a01779350-coder|quality report|Claude|
-|M03|     |code and versions|Claude|
-|M04|jamesmorrisey123|protocol and cue video|Claude|
+|M01|yur029292|test subject and creating and sharing github repository|Visual Studio with Claude|
+|M02|a01779350-coder||Claude|
+|M03|a01712808-sys|coding and recording for data acquisition and cue video|Claude|
+|M04|jamesmorrisey123|creation/organisation and completion of files in GitHub | Claude |
 
 We measure one person, member M01. In the data that person has the code P01.
 
@@ -53,12 +46,12 @@ Our circuit already filters in hardware (26–433 Hz) but has no notch. PROTOCOL
 **Evidence:** `QUALITY-REPORT.md`, `code/check_quality.py`, the #TRIAL lines (clipped, late) of every raw file.
 
 ### 6. Fair split
-We split by whole sessions, never by windows. S01 to S05 (126 N trials) are for training and for every choice of features and model. S06 (18 N trials) are the test, each with its own electrode placement, and we open them only once, at the end. Because one recording never feeds both sets, the score shows how the model handles a new placement. Scope: one person (P01) and one movement, so the result says nothing about other people or other muscles.
+We split by whole sessions, never by windows. S01 to S05 (126 N trials) are for training and for every choice of features and model. S06 (18 N trials) is the test, each with its own electrode placement, and we open them only once, at the end. Because one recording never feeds both sets, the score shows how the model handles a new placement. Scope: one person (P01) and one movement, so the result says nothing about other people or other muscles.
 
 **Evidence:** the column `set` of `data/metadata.csv`.
 
 ## What comes next
-Our decisions about features, the model and the route are in `DECISIONS.md`. The rationale of each member is in `rationale/`.
+Our decisions about features, the model, and the route are in `DECISIONS.md`. The rationale of each member is in `rationale/`.
 
 ## How to repeat our recording
 Read `PROTOCOL.md`. It is enough to record the same way without asking us.
