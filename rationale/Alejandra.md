@@ -1,4 +1,4 @@
-# Rationale Alejandra
+# M02
 
 **I support:** our choice of RMS and mean absolute value per 200 ms window as features. Our sensor gives the raw EMG signal, and in our checks pushing made the signal about 20 times wider than at rest, so the size of the signal should be enough to separate movement from rest. They are also cheap to compute, so they could run on an Arduino later.
 Source: Section on decision trees.
