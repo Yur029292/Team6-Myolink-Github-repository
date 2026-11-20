@@ -1,6 +1,6 @@
 # Decisions about what comes next
 
-Team 6 · One person (P01), left biceps brachii, isometric elbow flexion against a table. Two classes: movement and rest.
+One person (P01), left biceps brachii, isometric elbow flexion against a table. Two classes: movement and rest.
 Rule for every choice below: we choose with sessions S01 to S05 only. The test session S06 is opened once, at the end.
 
 | Part | Our answer |
