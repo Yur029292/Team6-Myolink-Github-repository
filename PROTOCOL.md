@@ -24,10 +24,10 @@ The upper limit stays below 250 Hz, half of our sampling rate. Our sensor gives 
 12. **Consent.** The participant agreed to be recorded. The data uses codes (P01, member codes), never names.
 
 ## Sources
-SENIAM, *recommendations for sensor locations: biceps brachii.* seniam.org\
-Merletti R. *Standards for Reporting EMG Data.* ISEK, 1999.\
-De Luca CJ, Gilmore LD, Kuznetsov M, Roy SH. *Filtering the surface EMG signal: movement artifact and baseline noise contamination.* J Biomech 43(8), 2010.
-
+Sensor Locations. (n.d.). Seniam.Org. http://seniam.org/bicepsbrachii.html
+Merletti, D. R. (1999). Standards for Reporting EMG Data (Vol. 9, Issue 1) [Technical report on electromyography standards].
+De Luca, C. J., Gilmore, L. D., Kuznetsov, M., & Roy, S. H. (2010, May 28). Filtering the surface EMG signal: Movement artifact and baseline noise contamination. Journal of Biomechanics; PubMed. https://doi.org/10.1016/j.jbiomech.2010.01.027
+‌
 ## We read the method and we agree
 - M01, 2026-11-18, I read the method and I agree.
 - M02, 2026-11-18, I read the method and I agree.
