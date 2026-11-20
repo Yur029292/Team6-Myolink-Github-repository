@@ -1,5 +1,7 @@
-# M02 (example)
+# Rationale Alejandra
 
-I support the decision tree. Its rules are a few lines of code, so they fit our board. My doubt is that a tree can follow the noise of our small dataset. I would test it against one threshold first. If the threshold is as good on the test sessions, we keep the threshold, because the simpler model is easier to explain and to check.
+**I support:** our choice of RMS and mean absolute value per 200 ms window as features. Our sensor gives the raw EMG signal, and in our checks pushing made the signal about 20 times wider than at rest, so the size of the signal should be enough to separate movement from rest. They are also cheap to compute, so they could run on an Arduino later.
+Source: Section on decision trees.
 
-Source: the user guide of scikit-learn, section on decision trees.
+**I doubt:** our route choice of running the model only on the computer. We chose it because sending data to Google Sheets over WiFi failed, but that problem is about the cloud, not about the model. A threshold or logistic regression is small, so TinyML on the Arduino may still work.
+Source: Section on decision trees.
