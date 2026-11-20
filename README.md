@@ -33,7 +33,7 @@ The person pushes the palm up against the edge of a table and holds it, without 
 
 One recording holds 8 trials, so it lasts 112 s. Per trial: 5 s of movement and 6 s of rest.
 
-**Evidence:** `cue/cue-video.mp4`, the columns `rest_s`, `warning_s`, `move_s`, `between_s` of `data/metadata.csv`, `figures/one_recording_marked.png`.
+**Evidence:** `cue/cue-video.mp4`, the columns `rest_s`, `warning_s`, `move_s`, `between_s` of `data/metadata.csv`.
 
 ### 4. Sessions
 1 person. 6 sessions on 1 day, split into sessions 1-3 and 4-6 with a 1.5 hour break inbetween the two groupings. Every session starts with new electrodes, placed again from zero. Each session has 3 recordings. 
