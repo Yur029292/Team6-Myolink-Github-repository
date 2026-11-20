@@ -4,7 +4,7 @@ One person, one movement, one model. We record surface EMG from the biceps brach
 ## Team 6 Application of Bioinstrumentation Technologies Roles
 |Member code|GitHub user|In charge of|AI tool|
 |-----|-----|-----|-----|
-|M01|yur029292|test subject and creating and sharing github repository|Visual Studio with Claude|
+|M01|yur029292|test subject and creating and sharing GitHub repository|Claude|
 |M02|a01779350-coder|finished decisions|Claude|
 |M03|a01712808-sys|coding and recording for data acquisition and cue video|Claude|
 |M04|jamesmorrisey123|creation/organisation and completion of files in GitHub | Claude |
